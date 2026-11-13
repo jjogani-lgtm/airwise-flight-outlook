@@ -38,11 +38,32 @@ const AIRPORT_META = {
   ANC:{city:'Anchorage, AK',tz:'America/Anchorage',lat:61.17900,lon:-149.99256},
   HNL:{city:'Honolulu, HI',tz:'Pacific/Honolulu',lat:21.31839,lon:-157.92567}
 };
+const AIRLINES = {
+  "9E": "Endeavor Air Inc.",
+  "AA": "American Airlines Inc.",
+  "AS": "Alaska Airlines Inc.",
+  "B6": "JetBlue Airways",
+  "DL": "Delta Air Lines Inc.",
+  "EV": "ExpressJet Airlines LLC d/b/a aha!",
+  "F9": "Frontier Airlines Inc.",
+  "G4": "Allegiant Air",
+  "HA": "Hawaiian Airlines Inc.",
+  "MQ": "Envoy Air",
+  "NK": "Spirit Air Lines",
+  "OH": "PSA Airlines Inc.",
+  "OO": "SkyWest Airlines Inc.",
+  "QX": "Horizon Air",
+  "UA": "United Air Lines Inc.",
+  "WN": "Southwest Airlines Co.",
+  "YV": "Mesa Airlines Inc.",
+  "YX": "Republic Airline"
+};
 const DEFAULTS = {origin:'JFK', destination:'LAX', airline:'DL'};
 const form = document.querySelector('#flight-form');
 const originSelect = document.querySelector('#origin');
 const destinationSelect = document.querySelector('#destination');
 const airlineSelect = document.querySelector('#airline');
+const otherAirlineInput = document.querySelector('#other-airline');
 const dateInput = document.querySelector('#date');
 let historyData;
 
@@ -60,10 +81,17 @@ function setDateDefault(){
   dateInput.min = new Date().toISOString().slice(0,10);
 }
 function fillAirlines(data) {
-  const names = data?.airlines || {};
+  const selected = airlineSelect.value || DEFAULTS.airline;
+  const names = { ...AIRLINES, ...data?.airlines };
   const rows = Object.entries(names).sort((a,b)=>a[1].localeCompare(b[1]));
   airlineSelect.innerHTML = '<option value="">Select airline</option>' + rows.map(([code,name])=>`<option value="${escapeAttr(code)}">${escapeHtml(name)} · ${escapeHtml(code)}</option>`).join('');
-  airlineSelect.value = rows.some(([code])=>code===DEFAULTS.airline)?DEFAULTS.airline:(rows[0]?.[0]||'');
+  airlineSelect.add(new Option('Other airline', 'other'));
+  airlineSelect.value = selected;
+}
+function updateOtherAirline() {
+  const isOther = airlineSelect.value === 'other';
+  otherAirlineInput.closest('label').hidden = !isOther;
+  otherAirlineInput.required = isOther;
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function escapeAttr(s){return escapeHtml(s)}
@@ -100,7 +128,25 @@ function localToUtc(dateString,timeString,tz){
 }
 function formatLocal(date,tz,opts){return new Intl.DateTimeFormat('en-US',{timeZone:tz,...opts}).format(date)}
 const routeMap = document.querySelector('#route-map');
+const zoomOutButton = document.querySelector('#map-zoom-out');
+const zoomInButton = document.querySelector('#map-zoom-in');
+const fitButton = document.querySelector('#map-fit');
+const minZoom = -2;
+const maxZoom = 3;
 let displayedRoute;
+let zoomLevel = 0;
+
+function setMapZoom(level) {
+  zoomLevel = Math.max(minZoom, Math.min(maxZoom, level));
+  zoomOutButton.disabled = zoomLevel === minZoom;
+  zoomInButton.disabled = zoomLevel === maxZoom;
+  fitButton.disabled = zoomLevel === 0;
+  drawMap();
+}
+
+zoomOutButton.addEventListener('click', () => setMapZoom(zoomLevel - 1));
+zoomInButton.addEventListener('click', () => setMapZoom(zoomLevel + 1));
+fitButton.addEventListener('click', () => setMapZoom(0));
 
 function airportVector({ lat, lon }) {
   const latitude = lat * Math.PI / 180;
@@ -140,8 +186,10 @@ function drawMap() {
   const ys = points.map(point => point.y);
   const left = Math.min(...xs), right = Math.max(...xs);
   const top = Math.min(...ys), bottom = Math.max(...ys);
-  const scale = Math.min((width - 80) / Math.max(right - left, 20),
-    (height - 80) / Math.max(bottom - top, 20));
+  const padding = Math.min(40, width / 4, height / 4);
+  const fittedScale = Math.min((width - 2 * padding) / Math.max(right - left, 20),
+    (height - 2 * padding) / Math.max(bottom - top, 20));
+  const scale = fittedScale * 1.25 ** zoomLevel;
   const mapX = width / 2 - (left + right) / 2 * scale;
   const mapY = height / 2 - (top + bottom) / 2 * scale;
 
@@ -177,7 +225,7 @@ function updateMap(origin, destination, route, duration) {
   document.querySelector('#map-origin-city').textContent = AIRPORT_META[origin].city;
   document.querySelector('#map-dest-code').textContent = destination;
   document.querySelector('#map-dest-city').textContent = AIRPORT_META[destination].city;
-  drawMap();
+  setMapZoom(0);
 }
 
 new ResizeObserver(drawMap).observe(routeMap);
@@ -187,28 +235,48 @@ function showEstimate(event){
   const origin=originSelect.value,dest=destinationSelect.value,airline=airlineSelect.value,dateString=dateInput.value,timeString=document.querySelector('#time').value;
   if(!origin||!dest||!airline||!dateString||!timeString){error.textContent='Please fill in the required flight details.';error.hidden=false;return;}
   if(origin===dest){error.textContent='Choose two different airports for your route.';error.hidden=false;return;}
+  const customAirline = airline === 'other' ? otherAirlineInput.value.trim() : '';
+  if (airline === 'other' && !customAirline) {
+    error.textContent = 'Enter the airline name or code.';
+    error.hidden = false;
+    return;
+  }
+  const carrier = airline === 'other' ? customAirline.toUpperCase() : airline;
   const dateObj=new Date(`${dateString}T12:00:00`), hour=Number(timeString.slice(0,2));
-  const prediction=estimate(origin,dest,airline,dateObj.getMonth()+1,(dateObj.getDay()+6)%7,hour);
+  const prediction = historyData ? estimate(origin,dest,carrier,dateObj.getMonth()+1,(dateObj.getDay()+6)%7,hour) : null;
   const route=`${origin}-${dest}`;
   const mapRoute = buildMapRoute(origin, dest);
   const distance = mapRoute.distance;
-  const duration=average(historyData.duration,route,Math.max(75,distance/500*60+55));
+  const duration=average(historyData?.duration,route,Math.max(75,distance/500*60+55));
   const departure=localToUtc(dateString,timeString,AIRPORT_META[origin].tz);const arrival=new Date(departure.getTime()+duration*60000);
-  const pct=Math.round(prediction.probability*100), ontime=pct<20, elevated=pct>=34;
-  document.querySelector('#risk-value').textContent=`${pct}%`;
-  document.querySelector('#risk-ring').style.background=`conic-gradient(${elevated?'#d5a06c':'#90a57c'} 0 ${pct}%,#ecf0e9 ${pct}% 100%)`;
-  document.querySelector('#risk-meter').style.width=`${Math.min(100,pct)}%`;
-  document.querySelector('#risk-overline').textContent=`${prediction.routeCount.toLocaleString()} ROUTE RECORDS`;
-  document.querySelector('#risk-title').textContent=ontime?'Lower historical delay risk':elevated?'Higher historical delay risk':'Some chance of a delay';
-  document.querySelector('#risk-description').textContent=`About ${pct} in 100 similar departures were 15+ minutes late in the historical data. Past patterns can’t predict today’s conditions.`;
+  if (prediction) {
+    const pct=Math.round(prediction.probability*100), ontime=pct<20, elevated=pct>=34;
+    document.querySelector('#risk-value').textContent=`${pct}%`;
+    document.querySelector('#risk-ring').style.background=`conic-gradient(${elevated?'#d5a06c':'#90a57c'} 0 ${pct}%,#ecf0e9 ${pct}% 100%)`;
+    document.querySelector('#risk-meter').style.width=`${Math.min(100,pct)}%`;
+    document.querySelector('#risk-overline').textContent=`${prediction.routeCount.toLocaleString()} ROUTE RECORDS`;
+    document.querySelector('#risk-title').textContent=ontime?'Lower historical delay risk':elevated?'Higher historical delay risk':'Some chance of a delay';
+    const hasCarrierRouteHistory = bucket('airlineRoute', `${carrier}|${route}`);
+    document.querySelector('#risk-description').textContent = hasCarrierRouteHistory
+      ? `About ${pct} in 100 similar departures were 15+ minutes late in the historical data. Past patterns can’t predict today’s conditions.`
+      : `Estimated delay risk is ${pct}% using broader historical patterns. There are no records for this airline on the selected route.`;
+  } else {
+    document.querySelector('#risk-value').textContent = '—';
+    document.querySelector('#risk-ring').style.background = '#ecf0e9';
+    document.querySelector('#risk-meter').style.width = '0';
+    document.querySelector('#risk-overline').textContent = 'HISTORICAL OUTLOOK';
+    document.querySelector('#risk-title').textContent = 'Historical delay estimate unavailable';
+    document.querySelector('#risk-description').textContent = 'The route map and estimated travel time are based on airport coordinates.';
+  }
   document.querySelector('#arrival-time').textContent=formatLocal(arrival,AIRPORT_META[dest].tz,{hour:'numeric',minute:'2-digit'});
   document.querySelector('#arrival-day').textContent=`${formatLocal(arrival,AIRPORT_META[dest].tz,{weekday:'short',month:'short',day:'numeric'})} · ${dest} local`;
   document.querySelector('#duration-time').textContent=formatDuration(duration);
   document.querySelector('#distance-value').textContent=`${Math.round(distance).toLocaleString()} mi`;
   document.querySelector('#result-route-heading').textContent=`${origin} to ${dest}, at a glance`;
-  const airlineName=historyData.airlines[airline]||airline;const flightNum=document.querySelector('#flight-number').value.trim();
-  document.querySelector('#result-airline-mark').textContent=airline.slice(0,2);
-  document.querySelector('#result-flight-meta').textContent=`${airlineName}${flightNum?` · ${airline} ${flightNum}`:''}`;
+  const airlineName = historyData?.airlines?.[carrier] || AIRLINES[carrier] || customAirline || carrier;
+  const flightNum = document.querySelector('#flight-number').value.trim();
+  document.querySelector('#result-airline-mark').textContent=carrier.slice(0,2);
+  document.querySelector('#result-flight-meta').textContent=`${airlineName}${flightNum?` · ${customAirline ? "" : carrier + " "}${flightNum}`:''}`;
   document.querySelector('#result-flight-date').textContent=formatLocal(departure,AIRPORT_META[origin].tz,{weekday:'long',month:'long',day:'numeric',year:'numeric'})+` · ${timeString} local`;
   const results=document.querySelector('#results');
   results.hidden=false;
@@ -220,4 +288,19 @@ document.querySelector('#swap-route').addEventListener('click',()=>{const old=or
 form.addEventListener('submit',showEstimate);
 document.querySelector('#edit-flight').addEventListener('click',()=>document.querySelector('#planner').scrollIntoView({behavior:'smooth',block:'start'}));
 setAirportOptions(originSelect,DEFAULTS.origin);setAirportOptions(destinationSelect,DEFAULTS.destination);setDateDefault();updateAirportCaptions();
-fetch('history.json').then(r=>{if(!r.ok)throw new Error('Historical data unavailable');return r.json()}).then(data=>{historyData=data;fillAirlines(data)}).catch(()=>{airlineSelect.innerHTML='<option value="">Historical data unavailable</option>';document.querySelector('.submit-button').disabled=true;document.querySelector('#form-error').textContent='Historical data could not be loaded. Please open the project through a local web server.';});
+fillAirlines();
+airlineSelect.addEventListener('change', updateOtherAirline);
+
+fetch('history.json')
+  .then(response => {
+    if (!response.ok) throw new Error('Historical data unavailable');
+    return response.json();
+  })
+  .then(data => {
+    if (!(data.global?.[0] > 0)) throw new Error('Historical data unavailable');
+    historyData = data;
+    fillAirlines(data);
+  })
+  .catch(() => {
+    // The airline list and route map are available independently of the history file.
+  });
