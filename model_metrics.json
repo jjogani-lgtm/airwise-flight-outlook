@@ -1,0 +1,30 @@
+{
+  "target": "DEP_DELAY >= 15 minutes",
+  "features": [
+    "AIRLINE_CODE",
+    "ORIGIN",
+    "DEST",
+    "FL_DATE (year/month/day-of-week)",
+    "CRS_DEP_TIME (hour/minute)",
+    "DISTANCE"
+  ],
+  "excluded": [
+    "actual departure/arrival times",
+    "DEP_DELAY as a feature",
+    "arrival delay",
+    "delay causes",
+    "cancellation and diversion outcomes"
+  ],
+  "split": "chronological 80/20 by flight date; cutoff date belongs to test",
+  "cutoff_date": "2022-10-21",
+  "train_rows": 2336665,
+  "test_rows": 585691,
+  "positive_rate_test": 0.22598947226438515,
+  "accuracy_at_0_5": 0.7751817938127784,
+  "precision_at_0_5": 0.5154895231213873,
+  "recall_at_0_5": 0.08624206708975521,
+  "roc_auc": 0.6780587127711998,
+  "average_precision": 0.3787926556142155,
+  "brier_score": 0.16250613377659176,
+  "threshold": 0.5
+}
