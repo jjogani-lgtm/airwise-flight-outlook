@@ -36,20 +36,6 @@ function updateAirportCaptions(){
   document.querySelector('#destination-city').textContent=b?.city || 'Choose an arrival airport';
 }
 function bucket(kind,key){return historyData?.buckets?.[kind]?.[key] || null}
-function estimate(origin,dest,airline,month,weekday,hour){
-  const global=historyData.global, base=global[1]/global[0];
-  const route=`${origin}-${dest}`;
-  const parts=[
-    [bucket('airline',airline),.18,130], [bucket('origin',origin),.10,220], [bucket('route',route),.32,100],
-    [bucket('routeHour',`${route}|${hour}`),.14,35], [bucket('airlineRoute',`${airline}|${route}`),.12,55],
-    [bucket('airlineHour',`${airline}|${hour}`),.07,180], [bucket('month',String(month)),.04,5000],
-    [bucket('weekday',String(weekday)),.03,5000]
-  ];
-  let score=base*.12, total=.12, support=0;
-  for(const [b,weight,prior] of parts){if(!b)continue;const [n,late]=b;const reliability=n/(n+prior);const smoothed=(late+prior*base)/(n+prior);const w=weight*reliability;score+=smoothed*w;total+=w;if(weight>=.1)support+=n;}
-  const probability=Math.max(.03,Math.min(.85,score/total));
-  return {probability,base,support,routeCount:bucket('route',route)?.[0]||0};
-}
 function average(store,key,fallback){const b=store?.[key];return b&&b[0]?b[1]/b[0]:fallback}
 function greatCircle(a,b){const rad=v=>v*Math.PI/180;const lat1=rad(a.lat),lat2=rad(b.lat),dLat=lat2-lat1,dLon=rad(b.lon-a.lon);const x=Math.sin(dLat/2)**2+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;return 3958.8*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
 function coordsFromXY(p){
@@ -81,23 +67,33 @@ function paintMap(origin,dest,distance,duration){
   document.querySelector('#map-origin-code').textContent=origin;document.querySelector('#map-origin-city').textContent=AIRPORT_META[origin].city;
   document.querySelector('#map-dest-code').textContent=dest;document.querySelector('#map-dest-city').textContent=AIRPORT_META[dest].city;
 }
-function showEstimate(event){
+async function showEstimate(event){
   event?.preventDefault();const error=document.querySelector('#form-error');error.hidden=true;
   const origin=originSelect.value,dest=destinationSelect.value,airline=airlineSelect.value,dateString=dateInput.value,timeString=document.querySelector('#time').value;
   if(!origin||!dest||!airline||!dateString||!timeString){error.textContent='Please fill in the required flight details.';error.hidden=false;return;}
   if(origin===dest){error.textContent='Choose two different airports for your route.';error.hidden=false;return;}
-  const dateObj=new Date(`${dateString}T12:00:00`), hour=Number(timeString.slice(0,2));
-  const prediction=estimate(origin,dest,airline,dateObj.getMonth()+1,(dateObj.getDay()+6)%7,hour);
+  const dateObj=new Date(`${dateString}T12:00:00`);
   const route=`${origin}-${dest}`;
   const duration=average(historyData.duration,route,Math.max(75,routeDistance(origin,dest)/500*60+55));
-  const distance=routeDistance(origin,dest);const departure=localToUtc(dateString,timeString,AIRPORT_META[origin].tz);const arrival=new Date(departure.getTime()+duration*60000);
+  const distance=routeDistance(origin,dest);
+  const submitButton=document.querySelector('.submit-button');submitButton.disabled=true;
+  submitButton.querySelector('span').textContent='Checking trained model…';
+  let prediction;
+  try{
+    const response=await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({airline,origin,destination:dest,date:dateString,scheduled_departure_time:Number(timeString.replace(':','')),distance})});
+    const result=await response.json();if(!response.ok)throw new Error(result.error||'Model prediction failed');
+    prediction={probability:result.delay_probability,routeCount:bucket('route',route)?.[0]||0};
+  }catch(err){error.textContent='The trained prediction model is unavailable. Start the Airwise server with python3 predict_api.py and try again.';error.hidden=false;}
+  finally{submitButton.disabled=false;submitButton.querySelector('span').textContent='Check flight outlook';}
+  if(!prediction)return;
+  const departure=localToUtc(dateString,timeString,AIRPORT_META[origin].tz);const arrival=new Date(departure.getTime()+duration*60000);
   const pct=Math.round(prediction.probability*100), ontime=pct<20, elevated=pct>=34;
   document.querySelector('#risk-value').textContent=`${pct}%`;
   document.querySelector('#risk-ring').style.background=`conic-gradient(${elevated?'#d5a06c':'#90a57c'} 0 ${pct}%,#ecf0e9 ${pct}% 100%)`;
   document.querySelector('#risk-meter').style.width=`${Math.min(100,pct)}%`;
-  document.querySelector('#risk-overline').textContent=`${prediction.routeCount.toLocaleString()} ROUTE RECORDS`;
-  document.querySelector('#risk-title').textContent=ontime?'Lower historical delay risk':elevated?'Higher historical delay risk':'Some chance of a delay';
-  document.querySelector('#risk-description').textContent=`About ${pct} in 100 similar departures were 15+ minutes late in the historical data. Past patterns can’t predict today’s conditions.`;
+  document.querySelector('#risk-overline').textContent=`TRAINED MODEL · ${prediction.routeCount.toLocaleString()} ROUTE RECORDS`;
+  document.querySelector('#risk-title').textContent=ontime?'Lower estimated delay risk':elevated?'Higher estimated delay risk':'Some chance of a delay';
+  document.querySelector('#risk-description').textContent=`The trained model estimates a ${pct}% chance of departure 15+ minutes late from pre-departure flight details. Actual conditions can change.`;
   document.querySelector('#arrival-time').textContent=formatLocal(arrival,AIRPORT_META[dest].tz,{hour:'numeric',minute:'2-digit'});
   document.querySelector('#arrival-day').textContent=`${formatLocal(arrival,AIRPORT_META[dest].tz,{weekday:'short',month:'short',day:'numeric'})} · ${dest} local`;
   document.querySelector('#duration-time').textContent=formatDuration(duration);
