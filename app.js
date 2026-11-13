@@ -1,5 +1,42 @@
 const AIRPORT_META = {
-  SEA:{city:'Seattle, WA',tz:'America/Los_Angeles',x:218,y:92}, PDX:{city:'Portland, OR',tz:'America/Los_Angeles',x:208,y:120}, SFO:{city:'San Francisco, CA',tz:'America/Los_Angeles',x:196,y:193}, LAX:{city:'Los Angeles, CA',tz:'America/Los_Angeles',x:218,y:245}, SAN:{city:'San Diego, CA',tz:'America/Los_Angeles',x:220,y:260}, LAS:{city:'Las Vegas, NV',tz:'America/Los_Angeles',x:260,y:220}, PHX:{city:'Phoenix, AZ',tz:'America/Phoenix',x:294,y:252}, SLC:{city:'Salt Lake City, UT',tz:'America/Denver',x:292,y:172}, DEN:{city:'Denver, CO',tz:'America/Denver',x:360,y:181}, DFW:{city:'Dallas/Fort Worth, TX',tz:'America/Chicago',x:436,y:237}, IAH:{city:'Houston, TX',tz:'America/Chicago',x:452,y:267}, AUS:{city:'Austin, TX',tz:'America/Chicago',x:425,y:255}, ORD:{city:'Chicago, IL',tz:'America/Chicago',x:481,y:144}, MDW:{city:'Chicago, IL',tz:'America/Chicago',x:484,y:148}, MSP:{city:'Minneapolis, MN',tz:'America/Chicago',x:453,y:116}, DTW:{city:'Detroit, MI',tz:'America/Detroit',x:516,y:145}, STL:{city:'St. Louis, MO',tz:'America/Chicago',x:477,y:177}, ATL:{city:'Atlanta, GA',tz:'America/New_York',x:520,y:218}, MIA:{city:'Miami, FL',tz:'America/New_York',x:548,y:273}, FLL:{city:'Fort Lauderdale, FL',tz:'America/New_York',x:551,y:267}, MCO:{city:'Orlando, FL',tz:'America/New_York',x:546,y:250}, CLT:{city:'Charlotte, NC',tz:'America/New_York',x:542,y:205}, IAD:{city:'Washington, DC',tz:'America/New_York',x:570,y:180}, DCA:{city:'Washington, DC',tz:'America/New_York',x:569,y:185}, BWI:{city:'Baltimore, MD',tz:'America/New_York',x:575,y:175}, PHL:{city:'Philadelphia, PA',tz:'America/New_York',x:583,y:163}, EWR:{city:'Newark, NJ',tz:'America/New_York',x:586,y:158}, JFK:{city:'New York, NY',tz:'America/New_York',x:591,y:154}, LGA:{city:'New York, NY',tz:'America/New_York',x:589,y:150}, BOS:{city:'Boston, MA',tz:'America/New_York',x:602,y:132}, BNA:{city:'Nashville, TN',tz:'America/Chicago',x:498,y:201}, CLE:{city:'Cleveland, OH',tz:'America/New_York',x:532,y:158}, PIT:{city:'Pittsburgh, PA',tz:'America/New_York',x:551,y:169}, RDU:{city:'Raleigh, NC',tz:'America/New_York',x:553,y:196}, OAK:{city:'Oakland, CA',tz:'America/Los_Angeles',x:199,y:190}, SJC:{city:'San Jose, CA',tz:'America/Los_Angeles',x:202,y:197}, ANC:{city:'Anchorage, AK',tz:'America/Anchorage',x:95,y:105}, HNL:{city:'Honolulu, HI',tz:'Pacific/Honolulu',x:126,y:284}
+  SEA:{city:'Seattle, WA',tz:'America/Los_Angeles',lat:47.44794,lon:-122.31028},
+  PDX:{city:'Portland, OR',tz:'America/Los_Angeles',lat:45.58870,lon:-122.59800},
+  SFO:{city:'San Francisco, CA',tz:'America/Los_Angeles',lat:37.61981,lon:-122.37482},
+  LAX:{city:'Los Angeles, CA',tz:'America/Los_Angeles',lat:33.94250,lon:-118.40800},
+  SAN:{city:'San Diego, CA',tz:'America/Los_Angeles',lat:32.73360,lon:-117.19000},
+  LAS:{city:'Las Vegas, NV',tz:'America/Los_Angeles',lat:36.08336,lon:-115.15182},
+  PHX:{city:'Phoenix, AZ',tz:'America/Phoenix',lat:33.43530,lon:-112.00590},
+  SLC:{city:'Salt Lake City, UT',tz:'America/Denver',lat:40.78886,lon:-111.97987},
+  DEN:{city:'Denver, CO',tz:'America/Denver',lat:39.86003,lon:-104.67379},
+  DFW:{city:'Dallas/Fort Worth, TX',tz:'America/Chicago',lat:32.89680,lon:-97.03800},
+  IAH:{city:'Houston, TX',tz:'America/Chicago',lat:29.98440,lon:-95.34140},
+  AUS:{city:'Austin, TX',tz:'America/Chicago',lat:30.19753,lon:-97.66201},
+  ORD:{city:'Chicago, IL',tz:'America/Chicago',lat:41.97860,lon:-87.90480},
+  MDW:{city:'Chicago, IL',tz:'America/Chicago',lat:41.78600,lon:-87.75240},
+  MSP:{city:'Minneapolis, MN',tz:'America/Chicago',lat:44.88008,lon:-93.22174},
+  DTW:{city:'Detroit, MI',tz:'America/Detroit',lat:42.21377,lon:-83.35379},
+  STL:{city:'St. Louis, MO',tz:'America/Chicago',lat:38.74870,lon:-90.37000},
+  ATL:{city:'Atlanta, GA',tz:'America/New_York',lat:33.63670,lon:-84.42810},
+  MIA:{city:'Miami, FL',tz:'America/New_York',lat:25.79601,lon:-80.28975},
+  FLL:{city:'Fort Lauderdale, FL',tz:'America/New_York',lat:26.07260,lon:-80.15270},
+  MCO:{city:'Orlando, FL',tz:'America/New_York',lat:28.42940,lon:-81.30900},
+  CLT:{city:'Charlotte, NC',tz:'America/New_York',lat:35.21400,lon:-80.94310},
+  IAD:{city:'Washington, DC',tz:'America/New_York',lat:38.94450,lon:-77.45580},
+  DCA:{city:'Washington, DC',tz:'America/New_York',lat:38.85210,lon:-77.03770},
+  BWI:{city:'Baltimore, MD',tz:'America/New_York',lat:39.17540,lon:-76.66830},
+  PHL:{city:'Philadelphia, PA',tz:'America/New_York',lat:39.87190,lon:-75.24110},
+  EWR:{city:'Newark, NJ',tz:'America/New_York',lat:40.68940,lon:-74.17055},
+  JFK:{city:'New York, NY',tz:'America/New_York',lat:40.63945,lon:-73.77932},
+  LGA:{city:'New York, NY',tz:'America/New_York',lat:40.77720,lon:-73.87260},
+  BOS:{city:'Boston, MA',tz:'America/New_York',lat:42.36197,lon:-71.00790},
+  BNA:{city:'Nashville, TN',tz:'America/Chicago',lat:36.12450,lon:-86.67820},
+  CLE:{city:'Cleveland, OH',tz:'America/New_York',lat:41.41170,lon:-81.84980},
+  PIT:{city:'Pittsburgh, PA',tz:'America/New_York',lat:40.49150,lon:-80.23290},
+  RDU:{city:'Raleigh, NC',tz:'America/New_York',lat:35.87866,lon:-78.78730},
+  OAK:{city:'Oakland, CA',tz:'America/Los_Angeles',lat:37.72008,lon:-122.22118},
+  SJC:{city:'San Jose, CA',tz:'America/Los_Angeles',lat:37.36245,lon:-121.92919},
+  ANC:{city:'Anchorage, AK',tz:'America/Anchorage',lat:61.17900,lon:-149.99256},
+  HNL:{city:'Honolulu, HI',tz:'Pacific/Honolulu',lat:21.31839,lon:-157.92567}
 };
 const DEFAULTS = {origin:'JFK', destination:'LAX', airline:'DL'};
 const form = document.querySelector('#flight-form');
@@ -51,12 +88,10 @@ function estimate(origin,dest,airline,month,weekday,hour){
   return {probability,base,support,routeCount:bucket('route',route)?.[0]||0};
 }
 function average(store,key,fallback){const b=store?.[key];return b&&b[0]?b[1]/b[0]:fallback}
-function greatCircle(a,b){const rad=v=>v*Math.PI/180;const lat1=rad(a.lat),lat2=rad(b.lat),dLat=lat2-lat1,dLon=rad(b.lon-a.lon);const x=Math.sin(dLat/2)**2+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;return 3958.8*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
-function coordsFromXY(p){
-  // Airport locations are positioned directly on the illustrative contiguous-US map.
-  return p;
+function formatDuration(minutes) {
+  const rounded = Math.round(minutes);
+  return `${Math.floor(rounded / 60)}h ${String(rounded % 60).padStart(2, '0')}m`;
 }
-function formatDuration(minutes){const h=Math.floor(minutes/60),m=Math.round(minutes%60);return `${h}h ${String(m).padStart(2,'0')}m`;}
 function timezoneParts(date,tz){const parts=new Intl.DateTimeFormat('en-US',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(date);return Object.fromEntries(parts.map(p=>[p.type,p.value]));}
 function localToUtc(dateString,timeString,tz){
   const [y,mo,d]=dateString.split('-').map(Number),[h,m]=timeString.split(':').map(Number);let utc=Date.UTC(y,mo-1,d,h,m);
@@ -64,23 +99,89 @@ function localToUtc(dateString,timeString,tz){
   return new Date(utc);
 }
 function formatLocal(date,tz,opts){return new Intl.DateTimeFormat('en-US',{timeZone:tz,...opts}).format(date)}
-function routeDistance(origin,dest){
-  const known={LAX:{lat:33.94,lon:-118.41},JFK:{lat:40.64,lon:-73.78},SFO:{lat:37.62,lon:-122.38},ORD:{lat:41.98,lon:-87.90},ATL:{lat:33.64,lon:-84.43},SEA:{lat:47.45,lon:-122.31},DEN:{lat:39.86,lon:-104.67},DFW:{lat:32.90,lon:-97.04},MIA:{lat:25.79,lon:-80.29},BOS:{lat:42.36,lon:-71.01},EWR:{lat:40.69,lon:-74.17},MSP:{lat:44.88,lon:-93.22},LAS:{lat:36.08,lon:-115.15},PHX:{lat:33.43,lon:-112.01},CLT:{lat:35.21,lon:-80.94},MCO:{lat:28.43,lon:-81.31},IAH:{lat:29.98,lon:-95.34},SLC:{lat:40.79,lon:-111.98},SAN:{lat:32.73,lon:-117.19},DTW:{lat:42.21,lon:-83.35},PHL:{lat:39.87,lon:-75.24},DCA:{lat:38.85,lon:-77.04},IAD:{lat:38.95,lon:-77.46},BWI:{lat:39.18,lon:-76.67},PDX:{lat:45.59,lon:-122.60},AUS:{lat:30.20,lon:-97.67},FLL:{lat:26.07,lon:-80.15},BNA:{lat:36.13,lon:-86.67},RDU:{lat:35.88,lon:-78.79}};
-  const route=`${origin}-${dest}`;const historical=average(historyData.distance,route,null);if(historical)return historical;
-  const a=known[origin],b=known[dest];return a&&b?greatCircle(a,b):0;
+const routeMap = document.querySelector('#route-map');
+let displayedRoute;
+
+function airportVector({ lat, lon }) {
+  const latitude = lat * Math.PI / 180;
+  const longitude = lon * Math.PI / 180;
+  return [
+    Math.cos(latitude) * Math.cos(longitude),
+    Math.cos(latitude) * Math.sin(longitude),
+    Math.sin(latitude)
+  ];
 }
-function paintMap(origin,dest,distance,duration){
-  const a=coordsFromXY(AIRPORT_META[origin]),b=coordsFromXY(AIRPORT_META[dest]);
-  const dx=b.x-a.x,dy=b.y-a.y,curve=Math.min(68,Math.max(28,Math.abs(dx)*.15));
-  const cx=(a.x+b.x)/2,cy=(a.y+b.y)/2-curve;const path=`M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
-  document.querySelector('#route-glow').setAttribute('d',path);document.querySelector('#route-path').setAttribute('d',path);
-  const planeX=.25*a.x+.5*cx+.25*b.x,planeY=.25*a.y+.5*cy+.25*b.y;
-  const rotate=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;
-  document.querySelector('#route-nodes').innerHTML=`<circle class="route-marker-ring" cx="${a.x}" cy="${a.y}" r="7"/><circle class="route-marker-core" cx="${a.x}" cy="${a.y}" r="3"/><text class="route-code" x="${a.x-3}" y="${a.y+22}">${origin}</text><circle class="route-marker-ring dest" cx="${b.x}" cy="${b.y}" r="7"/><circle class="route-marker-core dest" cx="${b.x}" cy="${b.y}" r="3"/><text class="route-code" x="${b.x-3}" y="${b.y+22}">${dest}</text><text class="route-plane" x="${planeX}" y="${planeY}" transform="rotate(${rotate} ${planeX} ${planeY})">✦</text>`;
-  document.querySelector('#map-distance').textContent=Math.round(distance).toLocaleString();document.querySelector('#map-flight-time').textContent=formatDuration(duration);
-  document.querySelector('#map-origin-code').textContent=origin;document.querySelector('#map-origin-city').textContent=AIRPORT_META[origin].city;
-  document.querySelector('#map-dest-code').textContent=dest;document.querySelector('#map-dest-city').textContent=AIRPORT_META[dest].city;
+
+function projectMapPoint(lon, lat) {
+  return { x: (lon + 180) * 8, y: (90 - lat) * 10 };
 }
+
+function buildMapRoute(origin, destination) {
+  const start = airportVector(AIRPORT_META[origin]);
+  const end = airportVector(AIRPORT_META[destination]);
+  const dot = start.reduce((sum, value, index) => sum + value * end[index], 0);
+  const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
+  // Interpolating between the two vectors traces their great-circle arc.
+  const points = Array.from({ length: 49 }, (_, index) => {
+    const fraction = index / 48;
+    const [x, y, z] = start.map((value, axis) => value + (end[axis] - value) * fraction);
+    const lon = Math.atan2(y, x) * 180 / Math.PI;
+    const lat = Math.atan2(z, Math.hypot(x, y)) * 180 / Math.PI;
+    return projectMapPoint(lon, lat);
+  });
+  return { points, distance: angle * 3958.8 };
+}
+
+function drawMap() {
+  const { width, height } = routeMap.getBoundingClientRect();
+  if (!displayedRoute || !width || !height) return;
+  const { origin, destination, points } = displayedRoute;
+  const xs = points.map(point => point.x);
+  const ys = points.map(point => point.y);
+  const left = Math.min(...xs), right = Math.max(...xs);
+  const top = Math.min(...ys), bottom = Math.max(...ys);
+  const scale = Math.min((width - 80) / Math.max(right - left, 20),
+    (height - 80) / Math.max(bottom - top, 20));
+  const mapX = width / 2 - (left + right) / 2 * scale;
+  const mapY = height / 2 - (top + bottom) / 2 * scale;
+
+  routeMap.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  document.querySelector('#route-land').setAttribute('transform', `translate(${mapX} ${mapY}) scale(${scale})`);
+
+  const projected = points.map(({ x, y }) => ({
+    x: x * scale + mapX,
+    y: y * scale + mapY
+  }));
+  const path = projected.map(({ x, y }, index) => `${index ? 'L' : 'M'}${x} ${y}`).join(' ');
+  document.querySelector('#route-glow').setAttribute('d', path);
+  document.querySelector('#route-path').setAttribute('d', path);
+
+  const first = projected[0];
+  const last = projected[projected.length - 1];
+  const marker = ({ x, y }, code, type, labelOffset) => `
+    <circle class="route-marker-ring ${type}" cx="${x}" cy="${y}" r="6"/>
+    <circle class="route-marker-core ${type}" cx="${x}" cy="${y}" r="2.5"/>
+    <text class="route-code" x="${x}" y="${y + labelOffset}">${code}</text>`;
+  const originAbove = first.y <= last.y;
+  document.querySelector('#route-nodes').innerHTML =
+    marker(first, origin, 'origin', originAbove ? -12 : 22) +
+    marker(last, destination, 'dest', originAbove ? 22 : -12);
+}
+
+function updateMap(origin, destination, route, duration) {
+  displayedRoute = { origin, destination, points: route.points };
+  routeMap.setAttribute('aria-label', `Great-circle route from ${AIRPORT_META[origin].city} (${origin}) to ${AIRPORT_META[destination].city} (${destination})`);
+  document.querySelector('#map-distance').textContent = Math.round(route.distance * 0.868976).toLocaleString();
+  document.querySelector('#map-flight-time').textContent = formatDuration(duration);
+  document.querySelector('#map-origin-code').textContent = origin;
+  document.querySelector('#map-origin-city').textContent = AIRPORT_META[origin].city;
+  document.querySelector('#map-dest-code').textContent = destination;
+  document.querySelector('#map-dest-city').textContent = AIRPORT_META[destination].city;
+  drawMap();
+}
+
+new ResizeObserver(drawMap).observe(routeMap);
+
 function showEstimate(event){
   event?.preventDefault();const error=document.querySelector('#form-error');error.hidden=true;
   const origin=originSelect.value,dest=destinationSelect.value,airline=airlineSelect.value,dateString=dateInput.value,timeString=document.querySelector('#time').value;
@@ -89,8 +190,10 @@ function showEstimate(event){
   const dateObj=new Date(`${dateString}T12:00:00`), hour=Number(timeString.slice(0,2));
   const prediction=estimate(origin,dest,airline,dateObj.getMonth()+1,(dateObj.getDay()+6)%7,hour);
   const route=`${origin}-${dest}`;
-  const duration=average(historyData.duration,route,Math.max(75,routeDistance(origin,dest)/500*60+55));
-  const distance=routeDistance(origin,dest);const departure=localToUtc(dateString,timeString,AIRPORT_META[origin].tz);const arrival=new Date(departure.getTime()+duration*60000);
+  const mapRoute = buildMapRoute(origin, dest);
+  const distance = mapRoute.distance;
+  const duration=average(historyData.duration,route,Math.max(75,distance/500*60+55));
+  const departure=localToUtc(dateString,timeString,AIRPORT_META[origin].tz);const arrival=new Date(departure.getTime()+duration*60000);
   const pct=Math.round(prediction.probability*100), ontime=pct<20, elevated=pct>=34;
   document.querySelector('#risk-value').textContent=`${pct}%`;
   document.querySelector('#risk-ring').style.background=`conic-gradient(${elevated?'#d5a06c':'#90a57c'} 0 ${pct}%,#ecf0e9 ${pct}% 100%)`;
@@ -107,8 +210,10 @@ function showEstimate(event){
   document.querySelector('#result-airline-mark').textContent=airline.slice(0,2);
   document.querySelector('#result-flight-meta').textContent=`${airlineName}${flightNum?` · ${airline} ${flightNum}`:''}`;
   document.querySelector('#result-flight-date').textContent=formatLocal(departure,AIRPORT_META[origin].tz,{weekday:'long',month:'long',day:'numeric',year:'numeric'})+` · ${timeString} local`;
-  paintMap(origin,dest,distance,duration);
-  const results=document.querySelector('#results');results.hidden=false;results.scrollIntoView({behavior:'smooth',block:'start'});
+  const results=document.querySelector('#results');
+  results.hidden=false;
+  updateMap(origin, dest, mapRoute, duration);
+  results.scrollIntoView({behavior:'smooth',block:'start'});
 }
 originSelect.addEventListener('change',updateAirportCaptions);destinationSelect.addEventListener('change',updateAirportCaptions);
 document.querySelector('#swap-route').addEventListener('click',()=>{const old=originSelect.value;originSelect.value=destinationSelect.value;destinationSelect.value=old;updateAirportCaptions();});
