@@ -32,7 +32,7 @@
     </header>
 
     <main id="top">
-      <section class="intro" id="planner">
+      <section class="intro" id="intro">
         <div class="intro-copy">
           <div class="eyebrow"><span class="eyebrow-line"></span> OPERATIONS DASHBOARD</div>
           <h1>Flight Operations<br/><em>Overview</em></h1>
@@ -60,16 +60,16 @@
       </section>
 
       <section class="monitor-section" id="monitor" aria-label="Flight outlook monitor">
-        <div class="monitor-header"><div><div class="eyebrow"><span class="eyebrow-line"></span> MULTI-FLIGHT MONITOR</div><h2>Flight monitor</h2><p>Review the historical outlooks you’ve checked in this session.</p></div><a class="monitor-action" href="#planner">＋ <span>Check a flight</span></a></div>
-        <div class="monitor-toolbar"><label class="monitor-search"><span aria-hidden="true">⌕</span><input id="monitor-search" type="search" placeholder="Search route or airline" aria-label="Search monitored flights"></label><label class="filter-wrap"><span>OUTLOOK</span><select id="monitor-filter" aria-label="Filter by outlook"><option value="all">All outlooks</option><option value="low">Lower risk</option><option value="medium">Some chance</option><option value="high">Higher risk</option></select></label><span class="monitor-count" id="monitor-count">0 flights</span></div>
+        <div class="monitor-header"><div><div class="eyebrow"><span class="eyebrow-line"></span> MULTI-FLIGHT MONITOR</div><h2>Flight monitor</h2><p>Review the historical outlooks saved in this browser.</p></div><a class="monitor-action" href="#planner">＋ <span>Check a flight</span></a></div>
+        <div class="monitor-toolbar"><label class="monitor-search"><span aria-hidden="true">⌕</span><input id="monitor-search" type="search" placeholder="Search route or airline" aria-label="Search monitored flights"></label><label class="filter-wrap"><span>OUTLOOK</span><select id="monitor-filter" aria-label="Filter by outlook"><option value="all">All outlooks</option><option value="low">Lower risk</option><option value="medium">Some chance</option><option value="high">Higher risk</option></select></label><label class="filter-wrap"><span>SORT</span><select id="monitor-sort" aria-label="Sort flights"><option value="newest">Recently added</option><option value="risk">Highest risk</option><option value="departure">Departure date</option></select></label><span class="monitor-count" id="monitor-count">0 flights</span></div>
         <div class="table-wrap"><table class="monitor-table is-empty"><thead><tr><th>FLIGHT</th><th>ROUTE</th><th>DEPARTURE</th><th>HISTORICAL OUTLOOK</th><th>DELAY CHANCE</th><th></th></tr></thead><tbody id="monitor-rows"><tr class="empty-row"><td colspan="6"><span class="empty-icon">✈</span><strong>No flights checked yet</strong><small>Use the flight form below to add an outlook to your monitor.</small></td></tr></tbody></table></div>
         <div class="table-footnote"><span class="status-dot delayed"></span> Estimates reflect historical patterns, not live flight status.</div>
       </section>
 
       <section class="workspace" aria-label="Flight delay planner">
-        <div class="planner-card">
+        <div class="planner-card" id="planner">
           <div class="card-heading"><div><span class="step-label">01 <i>·</i> NEW MONITORING ENTRY</span><h2>Add a flight to monitor</h2></div><span class="required-note"><b>*</b> Required</span></div>
-          <form id="flight-form">
+          <p id="editing-status" class="baseline-note" hidden></p><button id="cancel-edit" type="button" class="edit-button" hidden>Cancel editing</button><form id="flight-form">
             <div class="route-fields">
               <label class="field airport-field"><span class="field-label">FROM <b>*</b></span><span class="select-wrap"><span class="field-pin origin-pin"></span><select id="origin" required aria-label="Origin airport"></select><span class="chevron">⌄</span></span><span class="field-sub" id="origin-city">Choose a departure airport</span></label>
               <button class="swap-button" id="swap-route" type="button" aria-label="Swap origin and destination" title="Swap route">↔</button>
@@ -93,6 +93,7 @@
         <aside class="sample-card"><div class="sample-top"><span class="sample-kicker">HISTORICAL SIGNAL</span><span class="sun-icon">☼</span></div><p>Delay patterns vary by <em>route, carrier,</em> and departure time.</p><div class="sample-divider"></div><div class="sample-stat"><span class="sample-stat-mark">↗</span><span>Based on past US departure records<br/><strong>and not a live flight status feed.</strong></span></div><span class="sample-squiggle" aria-hidden="true">〰</span></aside>
       </section>
 
+      <p id="data-status" class="baseline-note" role="status">Loading historical data…</p>
       <section id="results" class="results-section" aria-live="polite" hidden>
         <div class="results-header"><div><div class="eyebrow"><span class="eyebrow-line"></span> HISTORICAL RISK ANALYSIS</div><h2 id="result-route-heading">Flight outlook details</h2></div><button id="edit-flight" class="edit-button" type="button">↺ <span>Edit flight details</span></button></div>
         <div class="results-grid">
@@ -100,8 +101,8 @@
             <div class="outlook-head"><div class="result-trip"><span class="result-airline-logo" id="result-airline-mark">A</span><span><strong id="result-flight-meta"></strong><small id="result-flight-date"></small></span></div><span class="outlook-tag"><span class="live-dot"></span> DELAY OUTLOOK</span></div>
             <div class="risk-block"><div class="risk-ring" id="risk-ring"><div><strong id="risk-value">—</strong><span>delay risk</span></div></div><div class="risk-copy"><span class="risk-overline" id="risk-overline">HISTORICAL PATTERN</span><h3 id="risk-title">Checking the pattern…</h3><p id="risk-description"></p></div></div>
             <div class="meter-track"><span id="risk-meter"></span></div><div class="meter-labels"><span>On time</span><span>More likely delayed</span></div>
-            <div class="outlook-stats"><div class="outlook-stat"><span>EST. ARRIVAL</span><strong id="arrival-time">—</strong><small id="arrival-day"></small></div><div class="outlook-stat"><span>TYPICAL FLIGHT</span><strong id="duration-time">—</strong><small>estimated gate to gate</small></div><div class="outlook-stat"><span>ROUTE DISTANCE</span><strong id="distance-value">—</strong><small>approx. great-circle</small></div></div>
-            <p class="outlook-disclaimer">Delay estimates use 2019–2023 flight history. Actual conditions can change.</p>
+            <div class="outlook-stats"><div class="outlook-stat"><span>TYPICAL ARRIVAL</span><strong id="arrival-time">—</strong><small id="arrival-day"></small></div><div class="outlook-stat"><span>TYPICAL FLIGHT</span><strong id="duration-time">—</strong><small>estimated gate to gate</small></div><div class="outlook-stat"><span>ROUTE DISTANCE</span><strong id="distance-value">—</strong><small>approx. great-circle</small></div></div>
+            <p id="prediction-context" class="baseline-note"></p><p class="outlook-disclaimer">Typical arrival uses scheduled departure plus typical duration and does not include predicted delay. Delay estimates use 2019–2023 flight history. Actual conditions can change.</p>
           </article>
           <article class="map-card"><div class="map-header"><div><span class="step-label">02 <i>·</i> THE ROUTE</span><h3>Your route, mapped</h3></div><span class="map-pill"><span class="map-pulse"></span> PLANNED ROUTE</span></div>
             <div class="map-zoom" role="group" aria-label="Route map zoom">
@@ -125,6 +126,17 @@
         </div>
       </section>
 
+      <section id="comparison" class="planner-card extra-section" hidden aria-labelledby="comparison-title">
+        <h2 id="comparison-title">Compare departure times</h2>
+        <p>Explore the same route, airline and date at six hypothetical departure times. These are estimates, not available flights.</p>
+        <button id="compare-times" type="button" class="edit-button">Compare departure times</button>
+        <p id="comparison-status" role="status"></p><div id="comparison-results"></div>
+      </section>
+      <section class="planner-card extra-section" aria-labelledby="model-title">
+        <h2 id="model-title">About the predictions</h2>
+        <p>Delay means departing at least 15 minutes late. Below 20% is lower risk; 20% to below 25% is some chance; 25% or above triggers a watch alert. These are demo thresholds, not validated operational cutoffs.</p>
+        <details><summary>Model performance and limitations</summary><div id="model-performance">Loading evaluation…</div></details>
+      </section>
       <section class="how-section" id="how-it-works"><div class="how-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> A MORE HUMAN WAY TO PLAN</div><h2>Helpful context.<br/><em>No crystal ball.</em></h2></div><p>Airwise uses a trained model of past flight outcomes to help you make a more informed plan. It’s a starting point—not a promise of what your flight will do.</p></div><div class="how-steps"><article><span class="how-number">01</span><span class="how-icon">⌁</span><h3>Choose your flight</h3><p>Add the route, airline, and your scheduled departure. We’ll take it from there.</p></article><article><span class="how-number">02</span><span class="how-icon">◷</span><h3>See the usual pattern</h3><p>The trained model uses airline, route, date, departure time, and distance to estimate delay risk.</p></article><article><span class="how-number">03</span><span class="how-icon">↗</span><h3>Plan with more context</h3><p>Explore your route and local arrival time, then leave a little breathing room where it helps.</p></article></div><p class="baseline-note">Model trained on earlier flights and evaluated on later flights. Estimates are based on historical patterns, not live operating conditions.</p></section>
     </main>
     <footer class="footer"><a class="brand footer-brand" href="#top"><span class="brand-mark"><svg viewBox="0 0 32 32"><path d="M5 21.5 27 10l-8.4 11.4-2.8-4.1L5 21.5Z"/><path d="m15.8 17.3 3.7 7.2 2.1-6.1"/></svg></span><span>airwise<span class="brand-period">.</span></span></a><span>Built for better travel days.</span><span>Estimates are informational and are not live flight status.</span></footer>

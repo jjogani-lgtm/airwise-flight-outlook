@@ -34,3 +34,11 @@ fallback.
 Airport coordinates come from [OurAirports](https://ourairports.com/data/).
 The bundled basemap comes from [Natural Earth 1:110m country boundaries](https://www.naturalearthdata.com/downloads/110m-cultural-vectors/).
 The map uses local assets and needs no account, API key, or map service.
+
+## Monitoring and comparisons
+
+Saved flights persist in this browser (up to 100 entries). Rechecking the same flight updates its entry. Use Edit, Delete, and the sort selector to manage the monitor. Cancel editing before adding a different flight. Browser storage can be cleared through browser settings.
+
+After checking a flight, compare six hypothetical departure times. These are historical risk estimates, not timetable availability. Each comparison uses one consistent source: the model, or the historical baseline if any model request fails. Results explain coverage, source and the dataset-wide baseline. Typical arrival does not incorporate predicted delay.
+
+The existing bundled model and metrics are unchanged. To produce the improved model and additional evaluation details, restore `flights_sample_3m.csv` beside `train_model.py`, install the model dependencies, and run `python3 train_model.py`. The updated script uses later training dates for validation, treats carrier/airport inputs as categories (grouping rare categories to fit the classifier limit), and reports confusion matrices, probability calibration bins, and performance at both 50% and 25% thresholds. Accuracy improvement is not guaranteed.

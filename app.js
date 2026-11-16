@@ -67,8 +67,32 @@ const airlineSelect = document.querySelector('#airline');
 const otherAirlineInput = document.querySelector('#other-airline');
 const dateInput = document.querySelector('#date');
 let historyData;
+const STORAGE_KEY = 'airwise-flights-v1';
 const monitoredFlights = [];
-let nextMonitorId = 1;
+try {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  if (Array.isArray(saved)) monitoredFlights.push(...saved.filter(f => f && AIRPORT_META[f.origin] && AIRPORT_META[f.destination] && typeof f.airline === 'string' && typeof f.airlineName === 'string' && typeof f.customAirline === 'string' && typeof f.flightNum === 'string' && typeof f.dateLabel === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(f.date) && /^\d{2}:\d{2}$/.test(f.time) && ['low','medium','high','unavailable'].includes(f.level) && (f.pct === null || (Number.isFinite(f.pct) && f.pct>=0 && f.pct<=100))).slice(0,100).map((f,i)=>({...f,id:i+1})));
+} catch { /* Browser storage may be unavailable. */ }
+function saveMonitor(){
+  try { localStorage.setItem(STORAGE_KEY,JSON.stringify(monitoredFlights.slice(0,100))); }
+  catch { /* Continue to support this session when storage is disabled. */ }
+}
+let nextMonitorId = monitoredFlights.length + 1;
+let editingId = null;
+let selectedFlight = null;
+let selectedMonitorId = null;
+function cancelEditing(){
+  editingId=null;
+  document.querySelector('#editing-status').hidden=true;
+  document.querySelector('#cancel-edit').hidden=true;
+  document.querySelector('.submit-button').querySelector('span').textContent='Add to flight monitor';
+}
+function focusPlanner(){document.querySelector('#planner').scrollIntoView({behavior:'smooth',block:'start'});originSelect.focus({preventScroll:true});}
+function loadFlight(flight){
+  originSelect.value=flight.origin;destinationSelect.value=flight.destination;airlineSelect.value=flight.airline;
+  otherAirlineInput.value=flight.customAirline;dateInput.value=flight.date;document.querySelector('#time').value=flight.time;document.querySelector('#flight-number').value=flight.flightNum;
+  updateOtherAirline();updateAirportCaptions();
+}
 
 function airportList() {
   const available = new Set(Object.keys(AIRPORT_META));
@@ -145,15 +169,17 @@ function renderMonitor(){
     const matchesQuery=!query||`${f.origin} ${f.destination} ${f.airlineName} ${f.airline} ${f.flightNum}`.toLowerCase().includes(query);
     return matchesFilter&&matchesQuery;
   });
+  const sort=document.querySelector('#monitor-sort').value;
+  rows.sort(sort==='risk' ? (a,b)=>(b.pct ?? -1)-(a.pct ?? -1) : sort==='departure' ? (a,b)=>(a.date+a.time).localeCompare(b.date+b.time) : (a,b)=>b.id-a.id);
   document.querySelector('#monitor-count').textContent=`${rows.length} ${rows.length===1?'flight':'flights'}`;
   const body=document.querySelector('#monitor-rows');
   if(!rows.length){
     body.closest('.monitor-table').classList.add('is-empty');
-    body.innerHTML=monitoredFlights.length?'<tr class="empty-row"><td colspan="6"><strong>No matching flights</strong><small>Try a different search or outlook filter.</small></td></tr>':'<tr class="empty-row"><td colspan="6"><span class="empty-icon">✈</span><strong>No flights checked yet</strong><small>Use the flight form above to add an outlook to your monitor.</small></td></tr>';
+    body.innerHTML=monitoredFlights.length?'<tr class="empty-row"><td colspan="6"><strong>No matching flights</strong><small>Try a different search or outlook filter.</small></td></tr>':'<tr class="empty-row"><td colspan="6"><span class="empty-icon">✈</span><strong>No flights checked yet</strong><small>Use the flight form below to add an outlook to your monitor.</small></td></tr>';
     return;
   }
   body.closest('.monitor-table').classList.remove('is-empty');
-  body.innerHTML=rows.map(f=>`<tr><td><span class="table-flight-mark">${escapeHtml((f.customAirline || f.airline).slice(0,2))}</span><span class="table-flight-name"><strong>${escapeHtml(f.flightNum?`${f.customAirline || f.airline} ${f.flightNum}`:f.airlineName)}</strong><small>${escapeHtml(f.airlineName)}</small></span></td><td><span class="table-route">${escapeHtml(f.origin)} <i>→</i> ${escapeHtml(f.destination)}</span></td><td><strong>${escapeHtml(f.dateLabel)}</strong><small class="table-subline">${escapeHtml(f.time)} local</small></td><td><span class="outlook-badge ${f.level}"><i class="status-dot ${f.level}"></i>${f.level==='low'?'Lower risk':f.level==='high'?'Higher risk':f.level==='medium'?'Some chance':'Unavailable'}</span></td><td><strong class="table-probability ${f.level}">${f.pct === null ? "—" : `${f.pct}%`}</strong><small class="table-subline">estimated delay chance</small></td><td><button class="table-view-button" type="button" data-monitor-id="${f.id}">View</button></td></tr>`).join('');
+  body.innerHTML=rows.map(f=>`<tr><td><span class="table-flight-mark">${escapeHtml((f.customAirline || f.airline).slice(0,2))}</span><span class="table-flight-name"><strong>${escapeHtml(f.flightNum?`${f.customAirline || f.airline} ${f.flightNum}`:f.airlineName)}</strong><small>${escapeHtml(f.airlineName)}</small></span></td><td><span class="table-route">${escapeHtml(f.origin)} <i>→</i> ${escapeHtml(f.destination)}</span></td><td><strong>${escapeHtml(f.dateLabel)}</strong><small class="table-subline">${escapeHtml(f.time)} local</small></td><td><span class="outlook-badge ${f.level}"><i class="status-dot ${f.level}"></i>${f.level==='low'?'Lower risk':f.level==='high'?'Higher risk':f.level==='medium'?'Some chance':'Unavailable'}</span></td><td><strong class="table-probability ${f.level}">${f.pct === null ? "—" : `${f.pct}%`}</strong><small class="table-subline">${escapeHtml(f.source || "Source not recorded")} · ${Number.isFinite(f.routeCount) ? f.routeCount.toLocaleString()+" route records" : "coverage not recorded"}</small></td><td><button class="table-view-button" type="button" data-monitor-id="${f.id}">View</button> <button class="table-view-button" type="button" data-edit-id="${f.id}">Edit</button> <button class="table-view-button" type="button" data-delete-id="${f.id}" aria-label="Delete ${escapeAttr(f.origin)} to ${escapeAttr(f.destination)}">Delete</button></td></tr>`).join('');
 }
 function renderOperationalAlerts(){
   const alerts=monitoredFlights.filter(f=>f.level==='high');
@@ -165,14 +191,17 @@ function renderOperationalAlerts(){
   }
   list.innerHTML=alerts.map(f=>`<article class="alert-item"><span class="alert-indicator" aria-hidden="true">!</span><span class="alert-flight"><span class="table-flight-mark">${escapeHtml((f.customAirline || f.airline).slice(0,2))}</span><span><strong>${escapeHtml(f.flightNum?`${f.customAirline || f.airline} ${f.flightNum}`:f.airlineName)}</strong><small>${escapeHtml(f.airlineName)}</small></span></span><span class="alert-route"><strong>${escapeHtml(f.origin)} <i>→</i> ${escapeHtml(f.destination)}</strong><small>${escapeHtml(f.dateLabel)} · ${escapeHtml(f.time)} local</small></span><span class="alert-risk"><strong>${f.pct}%</strong><small>historical delay chance</small></span><button class="alert-review-button" type="button" data-alert-id="${f.id}">Review outlook</button></article>`).join('');
 }
-function addToMonitor(flight){monitoredFlights.unshift({...flight,id:nextMonitorId++});renderMonitor();renderOperationalAlerts();}
+function addToMonitor(flight){
+  const previous=monitoredFlights.find(f=>f.id===editingId);
+  const duplicate=monitoredFlights.find(f=>f.origin===flight.origin && f.destination===flight.destination && f.airline===flight.airline && f.customAirline===flight.customAirline && f.date===flight.date && f.time===flight.time && f.flightNum===flight.flightNum);
+  const id=previous?.id || duplicate?.id || nextMonitorId++;
+  for(let i=monitoredFlights.length-1;i>=0;i--)if(monitoredFlights[i].id===previous?.id || monitoredFlights[i].id===duplicate?.id)monitoredFlights.splice(i,1);
+  monitoredFlights.unshift({...flight,id});monitoredFlights.splice(100);cancelEditing();saveMonitor();renderMonitor();renderOperationalAlerts();return id;
+}
 function reviewMonitoredFlight(id){
-  if (document.querySelector('.submit-button').disabled) return;
-  const flight=monitoredFlights.find(item=>item.id===Number(id));if(!flight)return;
-  originSelect.value=flight.origin;destinationSelect.value=flight.destination;airlineSelect.value=flight.airline;dateInput.value=flight.date;document.querySelector('#time').value=flight.time;document.querySelector('#flight-number').value=flight.flightNum;
-  otherAirlineInput.value = flight.customAirline;
-  updateOtherAirline();
-  updateAirportCaptions();showEstimate(null,false);
+  if(document.querySelector('.submit-button').disabled)return;
+  const flight=monitoredFlights.find(f=>f.id===Number(id));if(!flight)return;
+  cancelEditing();loadFlight(flight);showEstimate(null,false,flight.id);
 }
 const routeMap = document.querySelector('#route-map');
 const zoomOutButton = document.querySelector('#map-zoom-out');
@@ -294,7 +323,7 @@ async function predictDelay(payload) {
   }
 }
 
-async function showEstimate(event,track=true){
+async function showEstimate(event,track=true,reviewId=null){
   event?.preventDefault();
   const submitButton = document.querySelector('.submit-button');
   if (submitButton.disabled) return;
@@ -338,7 +367,17 @@ async function showEstimate(event,track=true){
     origin, dest, carrier, date.getMonth() + 1, (date.getDay() + 6) % 7, Math.floor(scheduledTime / 100)
   ) : null);
   const pct = prediction ? Math.round(prediction.probability * 100) : null;
-  const level = pct === null ? 'unavailable' : pct < 20 ? 'low' : pct >= HIGH_RISK_THRESHOLD ? 'high' : 'medium';
+  const source=modelPrediction ? 'Trained model' : prediction ? 'Historical baseline' : 'Unavailable';
+  const routeCount=prediction?.routeCount || 0;
+  const coverage=historyData ? (bucket('airlineRoute',`${carrier}|${route}`) ? 'Historical records exist for this airline on this route.' : 'Limited coverage: no records for this airline on this route. Broader patterns are used; this may not be a scheduled airline route.') : 'Historical coverage could not be checked.';
+  const base=historyData ? historyData.global[1]/historyData.global[0]*100 : null;
+  const baselineComparison = prediction && base !== null
+    ? `This estimate is ${Math.abs(prediction.probability*100-base).toFixed(1)} percentage points ${prediction.probability*100>=base?'above':'below'} the overall sample rate. This is broad context, not a like-for-like comparison. ` : '';
+  document.querySelector('#prediction-context').textContent=`${source}. ${base===null?'':`Overall historical delay rate: ${base.toFixed(1)}%. `}${baselineComparison}${coverage} Route counts show data coverage, not prediction confidence. ${!modelPrediction&&prediction?'Model unavailable; using the historical fallback.':''}`;
+  selectedFlight={airline:carrier,origin,destination:dest,date:dateString,distance:average(historyData?.distance,route,distance)};
+  document.querySelector('#comparison').hidden=false;document.querySelector('#comparison-results').replaceChildren();document.querySelector('#comparison-status').textContent='';
+  const riskPercent = prediction ? prediction.probability * 100 : null;
+  const level = riskPercent === null ? 'unavailable' : riskPercent < 20 ? 'low' : riskPercent >= HIGH_RISK_THRESHOLD ? 'high' : 'medium';
   if (prediction) {
     const ontime = level === 'low', elevated = level === 'high';
     document.querySelector('#risk-value').textContent=`${pct}%`;
@@ -350,7 +389,7 @@ async function showEstimate(event,track=true){
     document.querySelector('#risk-description').textContent = modelPrediction
       ? `The trained model estimates a ${pct}% chance of departure 15+ minutes late.`
       : hasCarrierRouteHistory
-      ? `About ${pct} in 100 similar departures were 15+ minutes late in the historical data. Past patterns can’t predict today’s conditions.`
+      ? `The historical baseline estimates a ${pct}% delay chance by combining route, airline and time patterns. This is not an observed rate for identical flights.`
       : `Estimated delay risk is ${pct}% using broader historical patterns. There are no records for this airline on the selected route.`;
   } else {
     document.querySelector('#risk-value').textContent = '—';
@@ -370,12 +409,13 @@ async function showEstimate(event,track=true){
   document.querySelector('#result-flight-meta').textContent=`${airlineName}${flightNum?` · ${customAirline ? "" : carrier + " "}${flightNum}`:''}`;
   document.querySelector('#result-flight-date').textContent=formatLocal(departure,AIRPORT_META[origin].tz,{weekday:'long',month:'long',day:'numeric',year:'numeric'})+` · ${timeString} local`;
   if (track) {
-    addToMonitor({
+    selectedMonitorId=addToMonitor({
       origin, destination: dest, airline, customAirline, airlineName, flightNum, date: dateString,
       dateLabel: formatLocal(departure, AIRPORT_META[origin].tz, { month: 'short', day: 'numeric' }),
-      time: timeString, pct, level
+      time: timeString, pct, level, source, routeCount
     });
   }
+  if(!track)selectedMonitorId=reviewId;
   const results=document.querySelector('#results');
   results.hidden=false;
   updateMap(origin, dest, mapRoute, duration);
@@ -384,15 +424,21 @@ async function showEstimate(event,track=true){
 originSelect.addEventListener('change',updateAirportCaptions);destinationSelect.addEventListener('change',updateAirportCaptions);
 document.querySelector('#swap-route').addEventListener('click',()=>{const old=originSelect.value;originSelect.value=destinationSelect.value;destinationSelect.value=old;updateAirportCaptions();});
 form.addEventListener('submit',showEstimate);
+document.querySelector('#monitor-sort').addEventListener('change',renderMonitor);
+document.querySelector('#cancel-edit').addEventListener('click',cancelEditing);
 document.querySelector('#monitor-search').addEventListener('input',renderMonitor);
 document.querySelector('#monitor-filter').addEventListener('change',renderMonitor);
 document.querySelector('#monitor-rows').addEventListener('click',event=>{
+  if(document.querySelector('.submit-button').disabled)return;
+  const remove=event.target.closest('[data-delete-id]');
+  if(remove){const id=Number(remove.dataset.deleteId),index=monitoredFlights.findIndex(f=>f.id===id);if(index>=0)monitoredFlights.splice(index,1);if(editingId===id)cancelEditing();saveMonitor();renderMonitor();renderOperationalAlerts();return;}
+  const edit=event.target.closest('[data-edit-id]');if(edit){editMonitoredFlight(Number(edit.dataset.editId));return;}
   const button=event.target.closest('[data-monitor-id]');if(button)reviewMonitoredFlight(button.dataset.monitorId);
 });
 document.querySelector('#operational-alert-list').addEventListener('click',event=>{
   const button=event.target.closest('[data-alert-id]');if(button)reviewMonitoredFlight(button.dataset.alertId);
 });
-document.querySelector('#edit-flight').addEventListener('click',()=>document.querySelector('#planner').scrollIntoView({behavior:'smooth',block:'start'}));
+document.querySelector('#edit-flight').addEventListener('click',()=>{if(selectedMonitorId)editMonitoredFlight(selectedMonitorId);else focusPlanner();});
 setAirportOptions(originSelect,DEFAULTS.origin);setAirportOptions(destinationSelect,DEFAULTS.destination);setDateDefault();updateAirportCaptions();
 fillAirlines();
 airlineSelect.addEventListener('change', updateOtherAirline);
@@ -407,7 +453,52 @@ fetch('history.json')
     historyData = data;
     fillAirlines(data);
     updateDatasetStats(data);
+    document.querySelector('#data-status').textContent='Historical data ready · 2019–2023 US flights.';
   })
   .catch(() => {
-    // The airline list and route map are available independently of the history file.
+    document.querySelector('#data-status').textContent='Historical data could not load. Dataset statistics and fallback estimates are unavailable. The model and map can still work.';
   });
+
+renderMonitor();
+renderOperationalAlerts();
+
+function editMonitoredFlight(id){
+  if(document.querySelector('.submit-button').disabled)return;
+  const flight=monitoredFlights.find(f=>f.id===id);if(!flight){focusPlanner();return;}
+  loadFlight(flight);editingId=id;
+  document.querySelector('#editing-status').textContent=`Editing ${flight.origin} → ${flight.destination}. Submit to update this saved flight.`;
+  document.querySelector('#editing-status').hidden=false;document.querySelector('#cancel-edit').hidden=false;
+  document.querySelector('.submit-button').querySelector('span').textContent='Update saved flight';focusPlanner();
+}
+document.querySelector('#compare-times').addEventListener('click',async()=>{
+  if(!selectedFlight)return;
+  const flight={...selectedFlight},button=document.querySelector('#compare-times');button.disabled=true;
+  document.querySelector('#comparison-status').textContent='Comparing six departure times…';
+  try{
+    const date=new Date(flight.date+'T12:00:00');
+    const predictions=await Promise.all([6,9,12,15,18,21].map(hour=>predictDelay({...flight,scheduled_departure_time:hour*100})));
+    // Use one source for the entire comparison so fallback and model scores are not mixed.
+    const useModel=predictions.every(Boolean);
+    const rows=[6,9,12,15,18,21].map((hour,i)=>{
+      const prediction=useModel?predictions[i]:historyData?estimate(flight.origin,flight.destination,flight.airline,date.getMonth()+1,(date.getDay()+6)%7,hour):null;
+      return {hour,pct:prediction?Math.round(prediction.probability*100):null};
+    });
+    if(JSON.stringify(flight)!==JSON.stringify(selectedFlight))return;
+    const available=rows.filter(r=>r.pct!==null),best=available.length?Math.min(...available.map(r=>r.pct)):null;
+    document.querySelector('#comparison-results').innerHTML=rows.map(r=>`<div class="comparison-row"><strong>${String(r.hour).padStart(2,'0')}:00 local</strong><meter min="0" max="100" value="${r.pct??0}" aria-label="Delay chance at ${r.hour}:00">${r.pct??0}%</meter><span>${r.pct===null?'Unavailable':r.pct+'%'}${r.pct!==null&&r.pct===best?' · Lowest estimate':''}</span></div>`).join('');
+    document.querySelector('#comparison-status').textContent=`${flight.origin} → ${flight.destination} · ${flight.airline} · ${flight.date}. Source: ${useModel?'trained model':historyData?'historical baseline (model unavailable for one or more times)':'unavailable'}. Small differences may not be meaningful. Coverage limitations above also apply.`;
+  }catch{document.querySelector('#comparison-status').textContent='Comparison unavailable. Please try again.';}
+  finally{button.disabled=false;}
+});
+fetch('model_metrics.json').then(r=>{if(!r.ok)throw Error();return r.json();}).then(m=>{
+  const el=document.querySelector('#model-performance');
+  el.textContent=`Evaluated on ${m.test_rows.toLocaleString()} later flights. Accuracy: ${(m.accuracy_at_0_5*100).toFixed(2)}%. Predicting no delay every time: ${((1-m.positive_rate_test)*100).toFixed(2)}%. At a 50% cutoff, precision is ${(m.precision_at_0_5*100).toFixed(1)}% (warnings that are correct), and recall is ${(m.recall_at_0_5*100).toFixed(1)}% (delays caught). ROC AUC: ${m.roc_auc.toFixed(3)} (risk ranking; 0.5 means chance). Brier score: ${m.brier_score.toFixed(3)} (probability error; lower is better).`;
+  if(Number.isFinite(m.precision_at_0_25))el.append(document.createTextNode(` At the 25% alert cutoff, precision is ${(m.precision_at_0_25*100).toFixed(1)}% and recall is ${(m.recall_at_0_25*100).toFixed(1)}%.`));
+  else el.append(document.createTextNode(' Performance at the 25% alert cutoff has not yet been measured.'));
+  if(m.confusion_matrix_at_0_5){
+    const matrix=m.confusion_matrix_at_0_5,table=document.createElement('table');table.className='evaluation-table';
+    table.innerHTML=`<caption>Test outcomes at the 50% cutoff</caption><thead><tr><th scope="col">Actual outcome</th><th scope="col">Predicted on time</th><th scope="col">Predicted delayed</th></tr></thead><tbody><tr><th scope="row">On time</th><td>${Number(matrix[0][0]).toLocaleString()}</td><td>${Number(matrix[0][1]).toLocaleString()}</td></tr><tr><th scope="row">Delayed</th><td>${Number(matrix[1][0]).toLocaleString()}</td><td>${Number(matrix[1][1]).toLocaleString()}</td></tr></tbody>`;el.append(table);
+  }
+  if(m.calibration_bins){const p=document.createElement('p');p.textContent='Probability check (estimated chance → observed delay rate): '+m.calibration_bins.map(b=>`${(b.mean_prediction*100).toFixed(1)}% → ${(b.observed_delay_rate*100).toFixed(1)}% (${b.count.toLocaleString()} flights)`).join('; ');el.append(p);}
+  const note=document.createElement('p');note.textContent='Historical evaluation is not a guarantee of current performance. Live weather and traffic are not included. New confusion-matrix and calibration details require retraining with the original dataset.';el.append(note);
+}).catch(()=>{document.querySelector('#model-performance').textContent='Evaluation could not be loaded. Please reload the page.';});

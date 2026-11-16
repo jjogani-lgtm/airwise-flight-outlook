@@ -362,3 +362,6 @@ body { min-height: 100vh; }
 
 .other-airline{margin-top:18px;max-width:320px}
 .other-airline input{padding-left:14px}
+
+/* Additional tools use the existing dashboard palette and card styles. */
+#planner{scroll-margin-top:24px}.extra-section{margin:24px 0}.extra-section h2{font:600 21px var(--display);margin:0 0 12px}.extra-section p,.extra-section details{font:12px/1.8 var(--sans);color:#52677d}.extra-section summary{cursor:pointer;font-weight:600}.extra-section #model-performance{margin-top:12px}.comparison-row{display:grid;grid-template-columns:100px minmax(80px,1fr) 180px;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line);font:12px var(--sans)}.comparison-row meter{width:100%;height:20px}.monitor-toolbar{flex-wrap:wrap}.monitor-table td:last-child{min-width:180px}.monitor-table td:last-child button{margin:3px 0}.evaluation-table{width:100%;margin:16px 0;border-collapse:collapse;font-size:11px}.evaluation-table th,.evaluation-table td{border:1px solid var(--line);padding:8px;text-align:left}.evaluation-table caption{text-align:left;margin-bottom:8px;font-weight:600}button:focus-visible,summary:focus-visible{outline:3px solid #3678b5;outline-offset:3px}@media(max-width:760px){.comparison-row{grid-template-columns:85px minmax(50px,1fr)}.comparison-row span{grid-column:2}.extra-section{padding:20px}}
