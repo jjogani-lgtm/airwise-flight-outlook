@@ -26,5 +26,14 @@
   "roc_auc": 0.6780587127711998,
   "average_precision": 0.3787926556142155,
   "brier_score": 0.16250613377659176,
-  "threshold": 0.5
+  "threshold": 0.5,
+  "precision_at_0_25": 0.3685451490730985,
+  "recall_at_0_25": 0.48890148080991236,
+  "alert_evaluation": {
+    "threshold": 0.25,
+    "test_rows": 585691,
+    "cutoff_date": "2022-10-21",
+    "model_sha256": "6a59cc02288cb68ac5650312ded15940c1ad60de0122767dfb6e86757410efde",
+    "source": "Original model evaluation in previous_model_same_test from the saved candidate comparison report; no retraining or model replacement."
+  }
 }
